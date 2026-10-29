@@ -7,12 +7,17 @@ export interface Exchange {
   pubkey?: Uint8Array<ArrayBuffer>
 }
 
-export namespace Exchange {
-  let _codec: Codec<Exchange>
+export interface ExchangeInput {
+  id?: Uint8Array
+  pubkey?: Uint8Array
+}
 
-  export const codec = (): Codec<Exchange> => {
+export namespace Exchange {
+  let _codec: Codec<Exchange, ExchangeInput>
+
+  export const codec = (): Codec<Exchange, ExchangeInput> => {
     if (_codec == null) {
-      _codec = message<Exchange>((obj, w, opts = {}) => {
+      _codec = message<Exchange, ExchangeInput>((obj, w, opts = {}) => {
         if (opts.lengthDelimited !== false) {
           w.fork()
         }
@@ -30,33 +35,33 @@ export namespace Exchange {
         if (opts.lengthDelimited !== false) {
           w.ldelim()
         }
-      }, (reader, length, opts = {}) => {
+      }, (r, length) => {
         const obj: any = {}
 
-        const end = length == null ? reader.len : reader.pos + length
+        const end = length == null ? r.len : r.pos + length
 
-        while (reader.pos < end) {
-          const tag = reader.uint32()
+        while (r.pos < end) {
+          const tag = r.uint32()
 
           switch (tag >>> 3) {
             case 1: {
-              obj.id = reader.bytes()
+              obj.id = r.bytes()
               break
             }
             case 2: {
-              obj.pubkey = reader.bytes()
+              obj.pubkey = r.bytes()
               break
             }
             default: {
-              reader.skipType(tag & 7)
+              r.skipType(tag & 7)
               break
             }
           }
         }
 
         return obj
-      }, function * (reader, length, prefix, opts = {}) {
-        const end = length == null ? reader.len : reader.pos + length
+      }, function * (r, length, prefix) {
+        const end = length == null ? r.len : r.pos + length
 
         if (prefix !== '.') {
           yield {
@@ -66,26 +71,26 @@ export namespace Exchange {
           }
         }
 
-        while (reader.pos < end) {
-          const tag = reader.uint32()
+        while (r.pos < end) {
+          const tag = r.uint32()
 
           switch (tag >>> 3) {
             case 1: {
               yield {
                 field: `${prefix}id`,
-                value: reader.bytes()
+                value: r.bytes()
               }
               break
             }
             case 2: {
               yield {
                 field: `${prefix}pubkey`,
-                value: reader.bytes()
+                value: r.bytes()
               }
               break
             }
             default: {
-              reader.skipType(tag & 7)
+              r.skipType(tag & 7)
               break
             }
           }
@@ -114,7 +119,7 @@ export namespace Exchange {
     value: Uint8Array<ArrayBuffer>
   }
 
-  export function encode (obj: Partial<Exchange>): Uint8Array<ArrayBuffer> {
+  export function encode (obj: ExchangeInput): Uint8Array<ArrayBuffer> {
     return encodeMessage(obj, Exchange.codec())
   }
 
